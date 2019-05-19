@@ -1,2 +1,1 @@
-# SpaceWar
-Steamworks' SpaceWar
+# SteamPuzzlePlatformer
