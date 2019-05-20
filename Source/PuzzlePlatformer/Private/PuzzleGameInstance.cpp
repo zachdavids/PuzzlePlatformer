@@ -14,8 +14,6 @@
 
 UPuzzleGameInstance::UPuzzleGameInstance(FObjectInitializer const& ObjectInitializer)
 {
-	UE_LOG(LogTemp, Warning, TEXT("GameInstance Constructed"));
-
 	ConstructorHelpers::FClassFinder<UUserWidget> MainMenuWBP(TEXT("/Game/MenuSystem/WBP_MainMenu"));
 	if (!ensure(MainMenuWBP.Class)) return;
 	MenuClass = MainMenuWBP.Class;
@@ -27,15 +25,14 @@ UPuzzleGameInstance::UPuzzleGameInstance(FObjectInitializer const& ObjectInitial
 
 void UPuzzleGameInstance::Init()
 {
-	UE_LOG(LogTemp, Warning, TEXT("GameInstance Initialized"));
-
 	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
 	if (!ensure(Subsystem)) return;
-	UE_LOG(LogTemp, Warning, TEXT("Subsystem: %s"), *Subsystem->GetSubsystemName().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Subsystem: %s"), *Subsystem->GetSubsystemName().ToString());
 	SessionInterface = Subsystem->GetSessionInterface();
 	if (!ensure(SessionInterface)) return;
 	SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UPuzzleGameInstance::OnCreateSessionComplete);
 	SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UPuzzleGameInstance::OnDestroySessionComplete);
+	SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UPuzzleGameInstance::OnFindSessionsComplete);
 
 	UEngine* Engine = GetEngine();
 	if (!ensure(Engine)) return;
@@ -64,19 +61,23 @@ void UPuzzleGameInstance::HostServer()
 
 void UPuzzleGameInstance::JoinServer(FString const& Address)
 {
-	UEngine* Engine = GetEngine();
-	if (!ensure(Engine)) return;
-	Engine->AddOnScreenDebugMessage(INDEX_NONE, 5.0f, FColor::Yellow, FString(TEXT("Joining: ")) + Address);
+	MainMenu->SetServerList({ "Test1", "Test2" });
+	//UEngine* Engine = GetEngine();
+	//if (!ensure(Engine)) return;
+	//Engine->AddOnScreenDebugMessage(INDEX_NONE, 5.0f, FColor::Yellow, FString(TEXT("Joining: ")) + Address);
 
-	APlayerController* PlayerController = GetFirstLocalPlayerController();
-	if (!ensure(PlayerController)) return;
-	PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+	//APlayerController* PlayerController = GetFirstLocalPlayerController();
+	//if (!ensure(PlayerController)) return;
+	//PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
 }
 
 void UPuzzleGameInstance::CreateSession()
 {
 	if (!ensure(SessionInterface)) return;
 	FOnlineSessionSettings SessionSettings;
+	SessionSettings.bIsLANMatch = true;
+	SessionSettings.NumPublicConnections = 2;
+	SessionSettings.bShouldAdvertise = true;
 	SessionInterface->CreateSession(0, FName("Game Session"), SessionSettings);
 }
 
@@ -106,6 +107,21 @@ void UPuzzleGameInstance::OnDestroySessionComplete(FName SessionName, bool bSucc
 	}
 }
 
+void UPuzzleGameInstance::OnFindSessionsComplete(bool bSuccess)
+{
+	if (!ensure(SessionSearch)) return;
+
+	if (bSuccess)
+	{
+		TArray<FString> ServerNames;
+		for (auto Session : SessionSearch->SearchResults)
+		{
+			ServerNames.Add(Session.GetSessionIdStr());
+		}
+		MainMenu->SetServerList(ServerNames);
+	}
+}
+
 void UPuzzleGameInstance::LoadMainMenu()
 {
 	UEngine* Engine = GetEngine();
@@ -115,6 +131,14 @@ void UPuzzleGameInstance::LoadMainMenu()
 	APlayerController* PlayerController = GetFirstLocalPlayerController();
 	if (!ensure(PlayerController)) return;
 	PlayerController->ClientTravel("/Game/Levels/MainMenu", ETravelType::TRAVEL_Absolute);
+}
+
+
+void UPuzzleGameInstance::RefreshServerList()
+{
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+	if (!ensure(SessionSearch)) return;
+	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 }
 
 void UPuzzleGameInstance::LoadMenu()

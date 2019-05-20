@@ -11,6 +11,7 @@
 class UUserWidget;
 class UMainMenu;
 class UInGameMenu;
+class FOnlineSessionSearch;
 
 /**
  * 
@@ -42,6 +43,9 @@ protected:
 	UFUNCTION(exec)
 	virtual void LoadMainMenu() override;
 
+	UFUNCTION(exec)
+	virtual void RefreshServerList() override;
+
 private:
 	TSubclassOf<UUserWidget> MenuClass;
 	TSubclassOf<UUserWidget> InGameMenuClass;
@@ -50,7 +54,9 @@ private:
 	UInGameMenu* InGameMenu = nullptr;
 
 	IOnlineSessionPtr SessionInterface;
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 	void CreateSession();
 	void OnCreateSessionComplete(FName SessionName, bool bSuccess);
 	void OnDestroySessionComplete(FName SessionName, bool bSuccess);
+	void OnFindSessionsComplete(bool bSuccess);
 };

@@ -8,7 +8,8 @@
 
 class UWidget;
 class UButton;
-class UEditableTextBox;
+class UServerEntry;
+class UPanelWidget;
 class UWidgetSwitcher;
 
 /**
@@ -18,6 +19,11 @@ UCLASS()
 class PUZZLEPLATFORMER_API UMainMenu : public UMenuWidget
 {
 	GENERATED_BODY()
+public:
+	UMainMenu(FObjectInitializer const& ObjectInitializer);
+
+	void SetServerList(TArray<FString> ServerNames);
+	void SelectIndex(uint32 Index);
 
 protected:
 	virtual bool Initialize() override;
@@ -63,5 +69,9 @@ private:
 	UButton* JoinMenuBackButton = nullptr;
 
 	UPROPERTY(meta = (BindWidget))
-	UEditableTextBox* AddressTextBox = nullptr;
+	UPanelWidget* ServerList = nullptr;
+
+	TSubclassOf<UUserWidget> ServerEntryClass = nullptr;
+
+	TOptional<uint32> SelectedIndex;
 };
