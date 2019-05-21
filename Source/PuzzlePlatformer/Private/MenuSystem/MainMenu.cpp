@@ -40,12 +40,9 @@ void UMainMenu::JoinServer()
 {
 	if (SelectedIndex.IsSet())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Selected Index: %d"), SelectedIndex.GetValue());
+		if (!ensure(MenuInterface)) return;
+		MenuInterface->JoinServer(SelectedIndex.GetValue());
 	}
-
-	if (!ensure(MenuInterface)) return;
-	//if (!ensure(AddressTextBox)) return;
-	MenuInterface->JoinServer("");
 }
 
 void UMainMenu::SetServerList(TArray<FString> ServerNames)
