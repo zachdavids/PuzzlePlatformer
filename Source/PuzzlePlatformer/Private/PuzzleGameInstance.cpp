@@ -46,13 +46,20 @@ void UPuzzleGameInstance::NetworkError(UWorld* World, UNetDriver* NetDriver, ENe
 	LoadMainMenu();
 }
 
+
+void UPuzzleGameInstance::StartSession()
+{
+	if (!ensure(SessionInterface)) return;
+	SessionInterface->StartSession(NAME_GameSession);
+}
+
 void UPuzzleGameInstance::HostServer(FString ServerName)
 {
 	if (!ensure(SessionInterface)) return;
 
 	this->ServerName = ServerName;
 
-	FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(FName("Game Session"));
+	FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(NAME_GameSession);
 
 	if (!ExistingSession)
 	{
@@ -60,7 +67,7 @@ void UPuzzleGameInstance::HostServer(FString ServerName)
 	}
 	else
 	{
-		SessionInterface->DestroySession(FName("Game Session"));
+		SessionInterface->DestroySession(NAME_GameSession);
 	}
 }
 
@@ -69,7 +76,7 @@ void UPuzzleGameInstance::JoinServer(uint32 Index)
 	if (!ensure(SessionInterface)) return;
 	if (!ensure(SessionSearch)) return;
 
-	SessionInterface->JoinSession(0, FName("Game Session"), SessionSearch->SearchResults[Index]);
+	SessionInterface->JoinSession(0, NAME_GameSession, SessionSearch->SearchResults[Index]);
 }
 
 void UPuzzleGameInstance::CreateSession()
@@ -84,12 +91,12 @@ void UPuzzleGameInstance::CreateSession()
 	{
 		SessionSettings.bIsLANMatch = false;
 	}
-	SessionSettings.NumPublicConnections = 2;
+	SessionSettings.NumPublicConnections = 5;
 	SessionSettings.bShouldAdvertise = true;
 	SessionSettings.bUsesPresence = true;
 	SessionSettings.Set(SERVER_NAME_SETTINGS_KEY, ServerName, 
 		EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-	SessionInterface->CreateSession(0, FName("Game Session"), SessionSettings);
+	SessionInterface->CreateSession(0, NAME_GameSession, SessionSettings);
 }
 
 void UPuzzleGameInstance::OnCreateSessionComplete(FName SessionName, bool bSuccess)
@@ -106,7 +113,7 @@ void UPuzzleGameInstance::OnCreateSessionComplete(FName SessionName, bool bSucce
 
 		UWorld* World = GetWorld();
 		if (!ensure(World)) return;
-		World->ServerTravel("/Game/Levels/Level1?listen");
+		World->ServerTravel("/Game/Levels/Lobby?listen");
 	}
 }
 

@@ -28,6 +28,10 @@ public:
 
 	void NetworkError(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 
+	void StartSession();
+
+	void EndSession();
+
 	UFUNCTION(BlueprintCallable)
 	void LoadMenu();
 
