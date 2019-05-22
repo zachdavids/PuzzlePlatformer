@@ -11,6 +11,8 @@
 #include "Blueprint/UserWidget.h"
 #include "OnlineSessionSettings.h"
 
+const static FName SERVER_NAME_SETTINGS_KEY = TEXT("ServerName");
+
 UPuzzleGameInstance::UPuzzleGameInstance(FObjectInitializer const& ObjectInitializer)
 {
 	ConstructorHelpers::FClassFinder<UUserWidget> MainMenuWBP(TEXT("/Game/MenuSystem/WBP_MainMenu"));
@@ -44,9 +46,12 @@ void UPuzzleGameInstance::NetworkError(UWorld* World, UNetDriver* NetDriver, ENe
 	LoadMainMenu();
 }
 
-void UPuzzleGameInstance::HostServer()
+void UPuzzleGameInstance::HostServer(FString ServerName)
 {
 	if (!ensure(SessionInterface)) return;
+
+	this->ServerName = ServerName;
+
 	FNamedOnlineSession* ExistingSession = SessionInterface->GetNamedSession(FName("Game Session"));
 
 	if (!ExistingSession)
@@ -82,6 +87,8 @@ void UPuzzleGameInstance::CreateSession()
 	SessionSettings.NumPublicConnections = 2;
 	SessionSettings.bShouldAdvertise = true;
 	SessionSettings.bUsesPresence = true;
+	SessionSettings.Set(SERVER_NAME_SETTINGS_KEY, ServerName, 
+		EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	SessionInterface->CreateSession(0, FName("Game Session"), SessionSettings);
 }
 
@@ -121,10 +128,13 @@ void UPuzzleGameInstance::OnFindSessionsComplete(bool bSuccess)
 		for (auto Result : SessionSearch->SearchResults)
 		{
 			FServerData Data;
-			Data.Name = Result.GetSessionIdStr();
+			FString ServerSetName;
+			Data.Name = (Result.Session.SessionSettings.Get(SERVER_NAME_SETTINGS_KEY, ServerSetName)) ? ServerSetName : "No server name";
 			Data.HostName = Result.Session.OwningUserName;
 			Data.TotalPlayers = Result.Session.SessionSettings.NumPublicConnections;
 			Data.CurrentPlayers = Data.TotalPlayers - Result.Session.NumOpenPublicConnections;
+
+
 			ServerNames.Add(Data);
 		}
 		MainMenu->SetServerList(ServerNames);

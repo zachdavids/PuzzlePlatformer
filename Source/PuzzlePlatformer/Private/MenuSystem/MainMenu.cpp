@@ -21,11 +21,13 @@ bool UMainMenu::Initialize()
 {
 	if (!ensure(Super::Initialize())) return false;
 
-	MainMenuHostButton->OnClicked.AddDynamic(this, &UMainMenu::HostServer);
+	MainMenuHostButton->OnClicked.AddDynamic(this, &UMainMenu::OpenHostMenu);
 	MainMenuJoinButton->OnClicked.AddDynamic(this, &UMainMenu::OpenJoinMenu);
 	MainMenuQuitButton->OnClicked.AddDynamic(this, &UMainMenu::Quit);
 	JoinMenuJoinButton->OnClicked.AddDynamic(this, &UMainMenu::JoinServer);
 	JoinMenuBackButton->OnClicked.AddDynamic(this, &UMainMenu::LoadMainMenu);
+	HostMenuHostButton->OnClicked.AddDynamic(this, &UMainMenu::HostServer);
+	HostMenuCancelButton->OnClicked.AddDynamic(this, &UMainMenu::LoadMainMenu);
 
 	return true;
 }
@@ -33,7 +35,8 @@ bool UMainMenu::Initialize()
 void UMainMenu::HostServer()
 {
 	if (!ensure(MenuInterface)) return;
-	MenuInterface->HostServer();
+	FString ServerName = HostMenuTextBox->Text.ToString();
+	MenuInterface->HostServer(ServerName);
 }
 
 void UMainMenu::JoinServer()
@@ -56,8 +59,8 @@ void UMainMenu::SetServerList(TArray<FServerData> ServerDataList)
 		UServerEntry* ServerEntry = CreateWidget<UServerEntry>(this, ServerEntryClass);
 		ServerEntry->ServerName->SetText(FText::FromString(ServerDataList[i].Name));
 		ServerEntry->HostName->SetText(FText::FromString(ServerDataList[i].HostName));
-		ServerEntry->ServerCapacity->SetText(FText::FromString(
-			ServerDataList[i].CurrentPlayers + "/" + ServerDataList[i].TotalPlayers));
+		ServerEntry->ServerCapacity->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), 
+			ServerDataList[i].CurrentPlayers, ServerDataList[i].TotalPlayers)));
 		ServerEntry->Setup(this, i);
 		ServerList->AddChild(ServerEntry);
 	}
@@ -67,6 +70,14 @@ void UMainMenu::SelectIndex(uint32 Index)
 {
 	SelectedIndex = Index;
 	UpdateChildren();
+}
+
+
+void UMainMenu::OpenHostMenu()
+{
+	if (!ensure(MenuSwitcher)) return;
+	if (!ensure(HostMenu)) return;
+	MenuSwitcher->SetActiveWidget(HostMenu);
 }
 
 void UMainMenu::OpenJoinMenu()

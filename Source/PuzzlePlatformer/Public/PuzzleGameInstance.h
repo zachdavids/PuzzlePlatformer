@@ -36,7 +36,7 @@ public:
 
 protected:
 	UFUNCTION(exec)
-	virtual void HostServer() override;
+	virtual void HostServer(FString ServerName) override;
 
 	UFUNCTION(exec)
 	virtual void JoinServer(uint32 Index) override;
@@ -48,6 +48,8 @@ protected:
 	virtual void RefreshServerList() override;
 
 private:
+	FString ServerName;
+
 	TSubclassOf<UUserWidget> MenuClass;
 	TSubclassOf<UUserWidget> InGameMenuClass;
 
@@ -56,6 +58,7 @@ private:
 
 	IOnlineSessionPtr SessionInterface;
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+
 	void CreateSession();
 	void OnCreateSessionComplete(FName SessionName, bool bSuccess);
 	void OnDestroySessionComplete(FName SessionName, bool bSuccess);
