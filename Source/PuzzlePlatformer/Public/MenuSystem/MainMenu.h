@@ -12,6 +12,17 @@ class UServerEntry;
 class UPanelWidget;
 class UWidgetSwitcher;
 
+USTRUCT()
+struct FServerData
+{
+	GENERATED_BODY()
+
+	FString Name;
+	FString HostName;
+	uint16 CurrentPlayers;
+	uint16 TotalPlayers;
+};
+
 /**
  * 
  */
@@ -19,10 +30,11 @@ UCLASS()
 class PUZZLEPLATFORMER_API UMainMenu : public UMenuWidget
 {
 	GENERATED_BODY()
+
 public:
 	UMainMenu(FObjectInitializer const& ObjectInitializer);
 
-	void SetServerList(TArray<FString> ServerNames);
+	void SetServerList(TArray<FServerData> ServerDataList);
 	void SelectIndex(uint32 Index);
 
 protected:
@@ -74,4 +86,6 @@ private:
 	TSubclassOf<UUserWidget> ServerEntryClass = nullptr;
 
 	TOptional<uint32> SelectedIndex;
+
+	void UpdateChildren();
 };

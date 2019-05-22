@@ -19,8 +19,17 @@ class PUZZLEPLATFORMER_API UServerEntry : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(BlueprintReadOnly)
+	bool bSelected = false;
+
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ServerName = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	UTextBlock* HostName = nullptr;
+
+	UPROPERTY(Meta = (BindWidget))
+	UTextBlock* ServerCapacity = nullptr;
 
 	void Setup(UMainMenu* Parent, uint32 Index);
 

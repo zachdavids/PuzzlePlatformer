@@ -45,16 +45,19 @@ void UMainMenu::JoinServer()
 	}
 }
 
-void UMainMenu::SetServerList(TArray<FString> ServerNames)
+void UMainMenu::SetServerList(TArray<FServerData> ServerDataList)
 {
 	if (!ensure(ServerEntryClass)) return;
 	if (!ensure(ServerList)) return;
 
 	ServerList->ClearChildren();
-	for (int i = 0; i != ServerNames.Num(); ++i)
+	for (int i = 0; i != ServerDataList.Num(); ++i)
 	{
 		UServerEntry* ServerEntry = CreateWidget<UServerEntry>(this, ServerEntryClass);
-		ServerEntry->ServerName->SetText(FText::FromString(ServerNames[i]));
+		ServerEntry->ServerName->SetText(FText::FromString(ServerDataList[i].Name));
+		ServerEntry->HostName->SetText(FText::FromString(ServerDataList[i].HostName));
+		ServerEntry->ServerCapacity->SetText(FText::FromString(
+			ServerDataList[i].CurrentPlayers + "/" + ServerDataList[i].TotalPlayers));
 		ServerEntry->Setup(this, i);
 		ServerList->AddChild(ServerEntry);
 	}
@@ -63,6 +66,7 @@ void UMainMenu::SetServerList(TArray<FString> ServerNames)
 void UMainMenu::SelectIndex(uint32 Index)
 {
 	SelectedIndex = Index;
+	UpdateChildren();
 }
 
 void UMainMenu::OpenJoinMenu()
@@ -91,4 +95,24 @@ void UMainMenu::Quit()
 	if (!ensure(PlayerController)) return;
 
 	PlayerController->ConsoleCommand("quit");
+}
+
+void UMainMenu::UpdateChildren()
+{
+	if (!SelectedIndex.IsSet()) return;
+
+	for (int i = 0; i != ServerList->GetChildrenCount(); ++i)
+	{
+		UServerEntry* Entry = Cast<UServerEntry>(ServerList->GetChildAt(i));
+		if (SelectedIndex.GetValue() == i)
+		{
+			Entry->bSelected = true;
+			Entry->SetColorAndOpacity(FLinearColor::Green);
+		}
+		else
+		{
+			Entry->bSelected = false;
+			Entry->SetColorAndOpacity(FLinearColor::White);
+		}
+	}
 }

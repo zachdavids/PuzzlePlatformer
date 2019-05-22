@@ -26,7 +26,7 @@ void UPuzzleGameInstance::Init()
 {
 	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
 	if (!ensure(Subsystem)) return;
-	//UE_LOG(LogTemp, Warning, TEXT("Subsystem: %s"), *Subsystem->GetSubsystemName().ToString());
+	UE_LOG(LogTemp, Warning, TEXT("Subsystem: %s"), *Subsystem->GetSubsystemName().ToString());
 	SessionInterface = Subsystem->GetSessionInterface();
 	if (!ensure(SessionInterface)) return;
 	SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UPuzzleGameInstance::OnCreateSessionComplete);
@@ -63,19 +63,25 @@ void UPuzzleGameInstance::JoinServer(uint32 Index)
 {
 	if (!ensure(SessionInterface)) return;
 	if (!ensure(SessionSearch)) return;
-	if (!ensure(MainMenu)) return;
 
 	SessionInterface->JoinSession(0, FName("Game Session"), SessionSearch->SearchResults[Index]);
-	MainMenu->SetServerList({ "Test1", "Test2" });
 }
 
 void UPuzzleGameInstance::CreateSession()
 {
 	if (!ensure(SessionInterface)) return;
 	FOnlineSessionSettings SessionSettings;
-	SessionSettings.bIsLANMatch = true;
+	if (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL")
+	{
+		SessionSettings.bIsLANMatch = true;
+	}
+	else
+	{
+		SessionSettings.bIsLANMatch = false;
+	}
 	SessionSettings.NumPublicConnections = 2;
 	SessionSettings.bShouldAdvertise = true;
+	SessionSettings.bUsesPresence = true;
 	SessionInterface->CreateSession(0, FName("Game Session"), SessionSettings);
 }
 
@@ -111,10 +117,15 @@ void UPuzzleGameInstance::OnFindSessionsComplete(bool bSuccess)
 
 	if (bSuccess)
 	{
-		TArray<FString> ServerNames;
-		for (auto Session : SessionSearch->SearchResults)
+		TArray<FServerData> ServerNames;
+		for (auto Result : SessionSearch->SearchResults)
 		{
-			ServerNames.Add(Session.GetSessionIdStr());
+			FServerData Data;
+			Data.Name = Result.GetSessionIdStr();
+			Data.HostName = Result.Session.OwningUserName;
+			Data.TotalPlayers = Result.Session.SessionSettings.NumPublicConnections;
+			Data.CurrentPlayers = Data.TotalPlayers - Result.Session.NumOpenPublicConnections;
+			ServerNames.Add(Data);
 		}
 		MainMenu->SetServerList(ServerNames);
 	}
@@ -155,6 +166,8 @@ void UPuzzleGameInstance::RefreshServerList()
 {
 	SessionSearch = MakeShareable(new FOnlineSessionSearch());
 	if (!ensure(SessionSearch)) return;
+	SessionSearch->MaxSearchResults = 100;
+	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 	SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 }
 
