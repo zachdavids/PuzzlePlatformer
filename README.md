@@ -1,1 +1,1 @@
-# SteamPuzzlePlatformer
+# PuzzlePlatformer
